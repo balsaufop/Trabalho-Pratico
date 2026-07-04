@@ -1,23 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
-void Menu ();
-void ajudaJogador ();
-void novoJogo ();
 
 //perfil do jogador
 typedef struct {
 	char nome[16];
-	char nivel;
+	int nivel;
 } Jogador;
+	
+void Menu ();
+void ajudaJogador ();
+void novoJogo (Jogador player);
 
 
 int main () {
 	srand(time(NULL)); // semente de aleatoriedade definida
+	printf("\n\nJOGO CODIGO SECRETO DE CORES\n\n");
 	Menu();
 
-		
+	return 0;	
 }
 
 
@@ -44,10 +47,6 @@ void ajudaJogador () {
     printf("Ex: Segredo = Vermelho Azul Verde Amarelo\n");
 	printf("Tentativa = Vermelho Verde Azul Roxo -> C E E -\n\n");
     printf("Acerte tudo na posicao certa pra vencer.\n");
-    
-    printf("\n\n");
-	printf("Selecione uma nova opção para o menu: \n");
-	Menu(); 
 }
 
 void Menu () {
@@ -55,33 +54,69 @@ void Menu () {
 	Jogador player;
 
 	// Introdução do jogo para o jogador e escolhas disponíveis
-	
-	printf("JOGO CODIGO SECRETO DE CORES\n\n");
-	printf("Opcoes de jogo:\n\n");
-	printf("N - Novo jogo\nE - Encerrar jogo\nC - Carregar jogo\nS - Salvar jogo\nA - Ajuda\n\n");
-	printf("Digite a opcao: ");
-	scanf(" %c", &opcaoInicial);
+	// levando para o seguimento baseado no que o jogador escolher
 
-	switch (opcaoInicial) {
-		case 'A':
-			ajudaJogador();
+	do {
+		printf("Opcoes de jogo:\n\n");
+		printf("N - Novo jogo\nE - Encerrar jogo\nC - Carregar jogo\nS - Salvar jogo\nA - Ajuda\n\n");
+		printf("Digite a opcao: ");
+		scanf(" %c", &opcaoInicial);
+		while (getchar() != '\n');
+
+		switch (opcaoInicial) {
+			case 'A':
+				ajudaJogador();
+				printf("\nSelecione uma nova opcao: \n");
+				break;
+			case 'N':
+				printf("Digite o seu nome: ");
+				fgets (player.nome, sizeof(player.nome), stdin);
+				printf("\n\nNiveis de dificuldade: \n");
+				printf("1 - Facil - 4 cores / 10 tentativas\n");
+				printf("2 - Medio - 5 cores / 12 tentativas\n");
+				printf("3 - Dificil - 6 cores / 15 tentativas\n");
+				printf("\nQual nivel de dificuldade deseja? (1, 2 ou 3) ");
+				scanf("%d", &player.nivel);
+				novoJogo(player);
+				break;
+			case 'E':
+				printf("Encerrando o jogo...\n");
+			default:
+				printf("Digite uma opcao valida.\n");
+				break;
+		}
+	} while (opcaoInicial != 'E'); // fechar programa caso seja E a opção escolhida
+}
+
+void novoJogo (Jogador player) {
+	// Função para iniciar um novo jogo
+
+	int nCores;
+	int nTentativas;
+
+	switch (player.nivel) {
+		case 1:
+			nCores = 4;
+			nTentativas = 10;
 			break;
-		case 'N':
-			printf("Digite o seu nome: ");
-			scanf("%s", player.nome);
-			printf("Niveis de dificuldade: \n");
-			printf("F - 4 cores / 10 tentativas\n");
-			printf("M - 5 cores / 12 tentativas\n");
-			printf("D - 6 cores / 15 tentativas\n");
-			printf("Qual nivel de dificuldade deseja? ");
-			scanf("%c", &player.nivel);
-			
+		case 2:
+			nCores = 5;
+			nTentativas = 12;
 			break;
-		case 'E':
-			printf("Encerrando o jogo...\n");
-			exit(0);
+		case 3:
+			nCores = 6;
+			nTentativas = 15;
+			break;
 		default:
-			printf("Digite uma opcao valida.");
-			break;
+			printf("Nivel de dificuldade invalido.\n"); //evitar comandos alternativos
+			return; 
 	}
+	int *nCoresP = malloc(nCores * sizeof(int));	// alocando dinamicamente o vetor
+	for (int i=0; i < nCores; i++) {				// de cores baseado na dificuldade
+		nCoresP[i] = rand() % 6 + 1; 
+	}
+	for(int i=0; i < nCores; i++) {
+		printf("%d ", nCoresP[i]); //imprime a sequencia de cores gerada RETIRAR DEPOIS DO TESTE
+	}
+	printf("\n\n");
 }
