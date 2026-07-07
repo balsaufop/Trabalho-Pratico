@@ -1,0 +1,9 @@
+# Visual Studio Code settings
+.vscode/
+
+# Build artifacts
+*.exe
+*.ilk
+*.obj
+*.pdb
+

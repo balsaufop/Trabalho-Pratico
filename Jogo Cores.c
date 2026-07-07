@@ -13,7 +13,7 @@ typedef struct {
 void Menu ();
 void ajudaJogador ();
 void novoJogo (Jogador player);
-
+void conferirTentativa (int *tentativa, int *segredo, int nCores, int nTentativas);
 
 int main () {
 	srand(time(NULL)); // semente de aleatoriedade definida
@@ -115,8 +115,36 @@ void novoJogo (Jogador player) {
 	for (int i=0; i < nCores; i++) {				// de cores baseado na dificuldade
 		nCoresP[i] = rand() % 6 + 1; 
 	}
+
+	printf("\nSequencia de cores gerada, boa sorte!\n\n");
 	for(int i=0; i < nCores; i++) {
 		printf("%d ", nCoresP[i]); //imprime a sequencia de cores gerada RETIRAR DEPOIS DO TESTE
 	}
-	printf("\n\n");
+
+	int **jogoSecreto = malloc(nTentativas * sizeof(int*)); 
+	for (int i=0; i < nTentativas; i++) {
+		jogoSecreto[i] = malloc(nCores * sizeof(int));
+	}
+
+	conferirTentativa(jogoSecreto, nCores, nTentativas);
+
+}
+
+void conferirTentativas (int **jogoSecreto, int nCores, int nTentativas) { 
+	
+	int tentativaAtual = 0;
+
+	do {
+		for (int i=0; i < nTentativas; i++) {
+		printf("Digite a tentativa %d: ", i+1);
+		for (int j=0; j < nCores; j++) {
+			scanf("%d", &jogoSecreto[i][j]); // tentativa do jogador
+			tentativaAtual++
+		}
+	}
+		
+
+	} while (tentativaAtual < nTentativas );
+
+
 }
