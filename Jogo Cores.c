@@ -13,7 +13,8 @@ typedef struct {
 void Menu ();
 void ajudaJogador ();
 void novoJogo (Jogador player);
-void conferirTentativa (int *tentativa, int *segredo, int nCores, int nTentativas);
+void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas);
+void embaralhar(char resultado[6], int nCores);
 
 int main () {
 	srand(time(NULL)); // semente de aleatoriedade definida
@@ -79,13 +80,13 @@ void Menu () {
 				scanf("%d", &player.nivel);
 				novoJogo(player);
 				break;
-			case 'E':
+			case 'X':
 				printf("Encerrando o jogo...\n");
 			default:
 				printf("Digite uma opcao valida.\n");
 				break;
 		}
-	} while (opcaoInicial != 'E'); // fechar programa caso seja E a opção escolhida
+	} while (opcaoInicial != 'X'); // fechar programa caso seja X a opção escolhida
 }
 
 void novoJogo (Jogador player) {
@@ -111,14 +112,14 @@ void novoJogo (Jogador player) {
 			printf("Nivel de dificuldade invalido.\n"); //evitar comandos alternativos
 			return; 
 	}
-	int *nCoresP = malloc(nCores * sizeof(int));	// alocando dinamicamente o vetor
+	int *Segredo = malloc(nCores * sizeof(int));	// alocando dinamicamente o vetor
 	for (int i=0; i < nCores; i++) {				// de cores baseado na dificuldade
-		nCoresP[i] = rand() % 6 + 1; 
+		Segredo[i] = rand() % 6 + 1; 
 	}
 
 	printf("\nSequencia de cores gerada, boa sorte!\n\n");
 	for(int i=0; i < nCores; i++) {
-		printf("%d ", nCoresP[i]); //imprime a sequencia de cores gerada RETIRAR DEPOIS DO TESTE
+		printf("%d ", Segredo[i]); //imprime a sequencia de cores gerada RETIRAR DEPOIS DO TESTE
 	}
 
 	int **jogoSecreto = malloc(nTentativas * sizeof(int*)); 
@@ -126,25 +127,57 @@ void novoJogo (Jogador player) {
 		jogoSecreto[i] = malloc(nCores * sizeof(int));
 	}
 
-	conferirTentativa(jogoSecreto, nCores, nTentativas);
+	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas);
 
 }
 
-void conferirTentativas (int **jogoSecreto, int nCores, int nTentativas) { 
+void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas) { 
 	
 	int tentativaAtual = 0;
+	int Ganhou = 0;
 
-	do {
-		for (int i=0; i < nTentativas; i++) {
-		printf("Digite a tentativa %d: ", i+1);
+	do { 
+		Ganhou = 0;
+		char resultado[6]; // guarda os simbolos antes de imprimir para aleatorizar depois
+
+		printf("Digite a tentativa %d: ", tentativaAtual + 1);
 		for (int j=0; j < nCores; j++) {
-			scanf("%d", &jogoSecreto[i][j]); // tentativa do jogador
-			tentativaAtual++
+			scanf("%d", &jogoSecreto[tentativaAtual][j]);
 		}
-	}
-		
 
-	} while (tentativaAtual < nTentativas );
+		embaralhar(resultado, nCores); // randomiza a ordem dos simbolos das dicas
+
+
+		printf("Resultado da tentativa %d: ", tentativaAtual + 1);
+		for (int i=0; i < nCores; i++) {
+			if (jogoSecreto[tentativaAtual][i] == Segredo[i]) {
+				printf("C ");
+				Ganhou += 1;
+			} 
+			else 
+			{
+				int achou = 0;
+				for (int k=0; k < nCores; k++) {
+					if (jogoSecreto[tentativaAtual][i] == Segredo[k]) {
+						achou = 1;
+					}
+				}
+				if (achou == 1) {
+					printf("E ");
+				} else {
+					printf("- ");
+				}
+			}
+		}
+		printf("\n");
+		tentativaAtual++;	
+	} while (tentativaAtual < nTentativas && Ganhou != nCores);
+}
+
+void embaralhar(char resultado [6], int nCores) {
+
+
+
 
 
 }
