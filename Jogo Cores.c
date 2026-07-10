@@ -59,7 +59,7 @@ void Menu () {
 
 	do {
 		printf("Opcoes de jogo:\n\n");
-		printf("N - Novo jogo\nE - Encerrar jogo\nC - Carregar jogo\nS - Salvar jogo\nA - Ajuda\n\n");
+		printf("N - Novo jogo\nX - Encerrar jogo\nC - Carregar jogo\nS - Salvar jogo\nA - Ajuda\n\n");
 		printf("Digite a opcao: ");
 		scanf(" %c", &opcaoInicial);
 		while (getchar() != '\n');
@@ -135,6 +135,7 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 	
 	int tentativaAtual = 0;
 	int Ganhou = 0;
+	int sair = 0;
 
 	do { 
 		Ganhou = 0;
@@ -143,41 +144,87 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 		printf("Digite a tentativa %d: ", tentativaAtual + 1);
 		for (int j=0; j < nCores; j++) {
 			scanf("%d", &jogoSecreto[tentativaAtual][j]);
+			if (jogoSecreto[tentativaAtual][j] == 0) {
+				printf("Deseja sair do jogo? (S/N) ");
+				char opcao;
+				scanf(" %c", &opcao);
+				if (opcao == 'S') {
+					printf("Voltando ao menu...\n\n");
+					sair = 1;
+					break; // sai do laço
+				} else {
+					j--;
+				}
+			} else if (jogoSecreto[tentativaAtual][j] < 1 || jogoSecreto[tentativaAtual][j] > 6) {
+				printf("Codigo de cor invalido. Digite novamente: ");
+				j--;
+			} 
 		}
 
-		embaralhar(resultado, nCores); // randomiza a ordem dos simbolos das dicas
-
+			
+		
+		if (sair) 
+			return; // sai da funcao inteira sem chamar a funcao do menu
 
 		printf("Resultado da tentativa %d: ", tentativaAtual + 1);
 		for (int i=0; i < nCores; i++) {
 			if (jogoSecreto[tentativaAtual][i] == Segredo[i]) {
-				printf("C ");
+				resultado[i] = 'C';
 				Ganhou += 1;
 			} 
 			else 
 			{
-				int achou = 0;
+				int repetido = 0;
 				for (int k=0; k < nCores; k++) {
 					if (jogoSecreto[tentativaAtual][i] == Segredo[k]) {
-						achou = 1;
+						repetido = 1;
 					}
 				}
-				if (achou == 1) {
-					printf("E ");
+				if (repetido == 1) {
+					resultado[i] = 'E';
 				} else {
-					printf("- ");
+					resultado[i] = '-';
 				}
 			}
 		}
 		printf("\n");
+
+		embaralhar(resultado, nCores); // randomiza a ordem dos simbolos das dicas
+
+		for (int i =0; i < nCores; i++) {
+			printf("%c ", resultado[i]);
+		}
+		printf("\n\n");
 		tentativaAtual++;	
 	} while (tentativaAtual < nTentativas && Ganhou != nCores);
+
+	if (Ganhou == nCores) {
+		printf("Parabens, voce acertou a sequencia secreta!\n\n");
+	} else {
+		printf("Que azar! Suas tentativas acabaram! A sequencia secreta era: ");
+		for (int i=0; i < nCores; i++) {
+			printf("%d ", Segredo[i]);
+		}
+		printf("\n\n");
+	}
 }
 
-void embaralhar(char resultado [6], int nCores) {
+	void embaralhar(char *resultado, int nCores) {
 
-
-
-
-
+		char substituicao;
+		int P1, P2;
+		for (int i = 0; i < nCores * 5; i++) {
+			P1 = rand() % nCores;
+			P2 = rand() % nCores;
+			substituicao = resultado[P1];
+			resultado[P1] = resultado[P2];
+			resultado[P2] = substituicao;
+	}
 }
+
+
+
+
+
+
+
