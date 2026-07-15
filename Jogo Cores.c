@@ -6,15 +6,22 @@
 
 //perfil do jogador
 typedef struct {
-	char nome[16];
+	char nome[51];
 	int nivel;
 } Jogador;
-	
+
+typedef struct {
+	char nome[51];
+	int nivel;
+	int tentativas;
+} Ranking;
+
 void Menu ();
 void ajudaJogador ();
 void novoJogo (Jogador player);
-void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas);
+void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador Player);
 void embaralhar(char resultado[6], int nCores);
+void RankingJogo (Jogador player, int *tentativaAtual);
 
 int main () {
 	srand(time(NULL)); // semente de aleatoriedade definida
@@ -23,9 +30,6 @@ int main () {
 
 	return 0;	
 }
-
-
-
 
 //explicação para o jogador de como o jogo funciona
 void ajudaJogador () {
@@ -59,7 +63,7 @@ void Menu () {
 
 	do {
 		printf("Opcoes de jogo:\n\n");
-		printf("N - Novo jogo\nX - Encerrar jogo\nC - Carregar jogo\nS - Salvar jogo\nA - Ajuda\n\n");
+		printf("N - Novo jogo\nX - Encerrar jogo\nC - Carregar jogo\nR - Ranking\nS - Salvar jogo\nA - Ajuda\n\n");
 		printf("Digite a opcao: ");
 		scanf(" %c", &opcaoInicial);
 		while (getchar() != '\n');
@@ -83,7 +87,7 @@ void Menu () {
 			case 'X':
 				printf("Encerrando o jogo...\n");
 			default:
-				printf("Digite uma opcao valida.\n");
+				printf("\n\nDigite uma opcao valida.\n\n");
 				break;
 		}
 	} while (opcaoInicial != 'X'); // fechar programa caso seja X a opção escolhida
@@ -127,16 +131,16 @@ void novoJogo (Jogador player) {
 		jogoSecreto[i] = malloc(nCores * sizeof(int));
 	}
 
-	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas);
+	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas, player);
 
 }
 
-void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas) { 
+void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador player) { 
 	
 	int tentativaAtual = 0;
 	int Ganhou = 0;
 	int sair = 0;
-
+	printf("Escolha numeros entre 1 e 6. Caso deseje sair, digite 0.\n\n");
 	do { 
 		Ganhou = 0;
 		char resultado[6]; // guarda os simbolos antes de imprimir para aleatorizar depois
@@ -156,7 +160,7 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 					j--;
 				}
 			} else if (jogoSecreto[tentativaAtual][j] < 1 || jogoSecreto[tentativaAtual][j] > 6) {
-				printf("Codigo de cor invalido. Digite novamente: ");
+				printf("\n\nCodigo de cor invalido. \nDigite novamente a tentativa %d: ", tentativaAtual + 1);
 				j--;
 			} 
 		}
@@ -200,28 +204,56 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 
 	if (Ganhou == nCores) {
 		printf("Parabens, voce acertou a sequencia secreta!\n\n");
+		RankingJogo(player, &tentativaAtual);
 	} else {
 		printf("Que azar! Suas tentativas acabaram! A sequencia secreta era: ");
 		for (int i=0; i < nCores; i++) {
 			printf("%d ", Segredo[i]);
 		}
 		printf("\n\n");
+
+		
+	}
+	free(Segredo);
+}
+
+void embaralhar(char *resultado, int nCores) {
+
+	char substituicao;
+	int P1, P2;
+	for (int i = 0; i < nCores * 5; i++) {
+		P1 = rand() % nCores;
+		P2 = rand() % nCores;
+		substituicao = resultado[P1];
+		resultado[P1] = resultado[P2];
+		resultado[P2] = substituicao;
 	}
 }
 
-	void embaralhar(char *resultado, int nCores) {
+void RankingJogo (Jogador player, int *tentativaAtual) {
 
-		char substituicao;
-		int P1, P2;
-		for (int i = 0; i < nCores * 5; i++) {
-			P1 = rand() % nCores;
-			P2 = rand() % nCores;
-			substituicao = resultado[P1];
-			resultado[P1] = resultado[P2];
-			resultado[P2] = substituicao;
+	FILE *arquivo = fopen("ranking.rnk", "rb");
+
+	Ranking ranking[10]; 
+	int quantidade = 0;
+	for (int i = 0; i < 10; i++) {
+		if (fread(&ranking[i], sizeof(Ranking), 1, arquivo) != 1) {
+			break;
+		}
+		quantidade++;
 	}
-}
 
+	strcpy (ranking[quantidade].nome, player.nome);
+	ranking[quantidade].nivel = player.nivel;
+	ranking[quantidade].tentativas = *tentativaAtual;
+	quantidade++;
+
+	fclose (arquivo);
+	arquivo = fopen("ranking.rnk", "wb");
+	fwrite(ranking, sizeof(Ranking), quantidade, arquivo);
+
+	fclose (arquivo);
+}
 
 
 
