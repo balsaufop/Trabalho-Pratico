@@ -20,8 +20,11 @@ void Menu ();
 void ajudaJogador ();
 void novoJogo (Jogador player);
 void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador Player);
-void embaralhar(char resultado[6], int nCores);
+void embaralhar(char *resultado, int nCores);
 void RankingJogo (Jogador player, int *tentativaAtual);
+void reescreverRanking (Ranking ranking[], int quantidade);
+void exibirRanking (Ranking ranking[], int quantidade);
+
 
 int main () {
 	srand(time(NULL)); // semente de aleatoriedade definida
@@ -86,6 +89,16 @@ void Menu () {
 				break;
 			case 'X':
 				printf("Encerrando o jogo...\n");
+				break;
+			case 'R': {
+				FILE *arquivoRanking = fopen("ranking.rnk", "rb"); 
+				Ranking ranking[10];                                
+				int quantidade = fread(ranking, sizeof(Ranking), 10, arquivoRanking); 
+				fclose(arquivoRanking);
+				
+				exibirRanking(ranking, quantidade);
+				break;
+			}
 			default:
 				printf("\n\nDigite uma opcao valida.\n\n");
 				break;
@@ -132,7 +145,6 @@ void novoJogo (Jogador player) {
 	}
 
 	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas, player);
-
 }
 
 void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador player) { 
@@ -161,11 +173,11 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 				}
 			} else if (jogoSecreto[tentativaAtual][j] < 1 || jogoSecreto[tentativaAtual][j] > 6) {
 				printf("\n\nCodigo de cor invalido. \nDigite novamente a tentativa %d: ", tentativaAtual + 1);
+				while (getchar() != '\n');
 				j--;
 			} 
 		}
-
-			
+		while (getchar() != '\n');
 		
 		if (sair) 
 			return; // sai da funcao inteira sem chamar a funcao do menu
@@ -232,31 +244,53 @@ void embaralhar(char *resultado, int nCores) {
 
 void RankingJogo (Jogador player, int *tentativaAtual) {
 
-	FILE *arquivo = fopen("ranking.rnk", "rb");
+    FILE *arquivo = fopen("ranking.rnk", "rb");
 
-	Ranking ranking[10]; 
-	int quantidade = 0;
-	for (int i = 0; i < 10; i++) {
-		if (fread(&ranking[i], sizeof(Ranking), 1, arquivo) != 1) {
-			break;
-		}
-		quantidade++;
-	}
+    Ranking ranking[11]; //colocar posição a mais para o novo jogador;
+    int quantidade = 0;
+    
+    if (arquivo != NULL) {
+        quantidade = fread(ranking, sizeof(Ranking), 10, arquivo);
+        fclose (arquivo);
+    }
 
-	strcpy (ranking[quantidade].nome, player.nome);
-	ranking[quantidade].nivel = player.nivel;
-	ranking[quantidade].tentativas = *tentativaAtual;
-	quantidade++;
+    strcpy (ranking[quantidade].nome, player.nome);
+    ranking[quantidade].nivel = player.nivel;
+    ranking[quantidade].tentativas = *tentativaAtual;
+    quantidade++;
 
-	fclose (arquivo);
-	arquivo = fopen("ranking.rnk", "wb");
-	fwrite(ranking, sizeof(Ranking), quantidade, arquivo);
+    reescreverRanking(ranking,quantidade);
 
-	fclose (arquivo);
+    if (quantidade > 10)
+    quantidade--;
+
+    arquivo = fopen("ranking.rnk", "wb");
+    fwrite(ranking, sizeof(Ranking), quantidade, arquivo);
+    fclose (arquivo);
 }
 
+void reescreverRanking (Ranking ranking[], int quantidade) {
 
+	for (int i=0;i < quantidade - 1; i++) {
+		for (int j=0;j < quantidade - 1; j++) {
+			int trocar = 0;
+			if (ranking[j].tentativas > ranking[j + 1].tentativas )
+				trocar = 1;
+			else if (ranking[j].tentativas == ranking[j + 1].tentativas && ranking[j].nivel < ranking[j + 1].nivel)
+				trocar = 1;
 
+			if (trocar == 1) {
+				Ranking substituicao = ranking[j];
+				ranking[j] = ranking[j + 1];
+				ranking[j + 1] = substituicao;
+			}
+		}
+	}
 
+}
 
+void exibirRanking (Ranking ranking[], int quantidade) {
 
+	for (int i=0; i < quantidade; i++) 
+		printf("Ranking: \n\nPosicao %d:\n%sDificuldade %d - %d tentativas \n\n", i+1, ranking[i].nome, ranking[i].nivel, ranking[i].tentativas);
+}
