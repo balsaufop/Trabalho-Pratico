@@ -88,7 +88,7 @@ void Menu () {
 		switch (opcaoInicial) {
 			case 'A':
 				ajudaJogador();
-				printf("\nSelecione uma nova opcao: \n");
+				printf("\n\nSelecione uma nova opcao: \n");
 				break;
 			case 'N':
 				printf("Digite o seu nome: ");
@@ -134,6 +134,7 @@ void Menu () {
 			case 'S': 
 				if (jogoAtual.emAndamento == 1) {
 					salvarJogo(jogoAtual.Segredo, jogoAtual.player, jogoAtual.nCores, jogoAtual.nTentativas, jogoAtual.tentativaAtual, jogoAtual.jogoSecreto);
+					printf("\n\nJogo salvo com sucesso.\n");
 				} else {
 					printf("\nNao ha jogo em andamento para salvar.\n\n");
 				}
@@ -226,15 +227,21 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 		while (getchar() != '\n');
 		
 		if (sair == 1) {
-			// NOVO: guarda o estado atual do jogo na struct antes de sair, para poder salvar depois
-			jogoAtual->player = player;
-			jogoAtual->nCores = nCores;
-			jogoAtual->nTentativas = nTentativas;
-			jogoAtual->tentativaAtual = tentativaAtual;
-			jogoAtual->Segredo = Segredo;
-			jogoAtual->jogoSecreto = jogoSecreto;
-			jogoAtual->emAndamento = 1;
-			return; // sai da funcao inteira sem chamar a funcao do menu
+			if (jogoAtual->emAndamento == 1) {
+   				free(jogoAtual->Segredo);
+   				for (int i = 0; i < jogoAtual->nTentativas; i++) {
+   					free(jogoAtual->jogoSecreto[i]);
+   				}	
+   				free(jogoAtual->jogoSecreto);
+			}
+		jogoAtual->player = player;
+		jogoAtual->nCores = nCores;
+		jogoAtual->nTentativas = nTentativas;
+		jogoAtual->tentativaAtual = tentativaAtual;
+		jogoAtual->Segredo = Segredo;
+		jogoAtual->jogoSecreto = jogoSecreto;
+		jogoAtual->emAndamento = 1;
+		return; 
 		}
 
 		printf("Resultado da tentativa %d: ", tentativaAtual + 1);
@@ -291,6 +298,7 @@ void embaralhar(char *resultado, int nCores) {
 	for (int i = 0; i < nCores * 5; i++) {
 		P1 = rand() % nCores;
 		P2 = rand() % nCores;
+
 		substituicao = resultado[P1];
 		resultado[P1] = resultado[P2];
 		resultado[P2] = substituicao;
@@ -318,6 +326,13 @@ void RankingJogo (Jogador player, int *tentativaAtual) {
 
     if (quantidade > 10)
     quantidade--;
+
+	for (int i = 0; i < quantidade; i++) {
+        if (strcmp(ranking[i].nome, player.nome) == 0) {
+            printf("Voce ficou na posicao %d do ranking!\n", i + 1);
+            break;
+        }
+    }
 
     arquivo = fopen("ranking.rnk", "wb");
     fwrite(ranking, sizeof(Ranking), quantidade, arquivo);
@@ -347,7 +362,7 @@ void reescreverRanking (Ranking ranking[], int quantidade) {
 void exibirRanking (Ranking ranking[], int quantidade) {
 
 	for (int i=0; i < quantidade; i++) 
-		printf("Ranking: \n\nPosicao %d:\n%sDificuldade %d - %d tentativas \n\n", i+1, ranking[i].nome, ranking[i].nivel, ranking[i].tentativas);
+		printf("Ranking: \n\nPosicao %d:\n%s\nDificuldade %d - %d tentativas \n\n", i+1, ranking[i].nome, ranking[i].nivel, ranking[i].tentativas);
 }
 
 void salvarJogo (int Segredo[], Jogador player, int nCores, int nTentativas, int tentativaAtual, int **jogoSecreto) {
