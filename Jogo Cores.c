@@ -1,10 +1,11 @@
+// Trabalho Prático de Introdução a Programação
+// Matheus Balsamão Guarda - 26.1.4154
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 
-
-//perfil do jogador
 typedef struct {
 	char nome[51];
 	int nivel;
@@ -16,15 +17,26 @@ typedef struct {
 	int tentativas;
 } Ranking;
 
+typedef struct {
+	Jogador player;
+	int nCores;
+	int nTentativas;
+	int tentativaAtual;
+	int *Segredo;
+	int **jogoSecreto;
+	int emAndamento; 
+} JogoAtual;
+
 void Menu ();
 void ajudaJogador ();
-void novoJogo (Jogador player);
-void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador Player);
+void novoJogo (Jogador player, JogoAtual *jogoAtual);
+void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador Player, JogoAtual *jogoAtual, int tentativaInicial);
 void embaralhar(char *resultado, int nCores);
 void RankingJogo (Jogador player, int *tentativaAtual);
 void reescreverRanking (Ranking ranking[], int quantidade);
 void exibirRanking (Ranking ranking[], int quantidade);
-
+void salvarJogo (int Segredo[], Jogador player, int nCores, int nTentativas, int tentativaAtual, int **jogoSecreto);
+void carregarJogo (char dificuldade, Jogador *player, int *tentativaAtual, JogoAtual *jogoAtual);
 
 int main () {
 	srand(time(NULL)); // semente de aleatoriedade definida
@@ -60,6 +72,8 @@ void ajudaJogador () {
 void Menu () {
 	char opcaoInicial; 
 	Jogador player;
+	JogoAtual jogoAtual; 
+	jogoAtual.emAndamento = 0; 
 
 	// Introdução do jogo para o jogador e escolhas disponíveis
 	// levando para o seguimento baseado no que o jogador escolher
@@ -79,15 +93,33 @@ void Menu () {
 			case 'N':
 				printf("Digite o seu nome: ");
 				fgets (player.nome, sizeof(player.nome), stdin);
+				player.nome[strcspn(player.nome, "\n")] = '\0';
 				printf("\n\nNiveis de dificuldade: \n");
 				printf("1 - Facil - 4 cores / 10 tentativas\n");
 				printf("2 - Medio - 5 cores / 12 tentativas\n");
 				printf("3 - Dificil - 6 cores / 15 tentativas\n");
 				printf("\nQual nivel de dificuldade deseja? (1, 2 ou 3) ");
-				scanf("%d", &player.nivel);
-				novoJogo(player);
+				do {
+					scanf("%d", &player.nivel);
+					if (player.nivel <1 || player.nivel > 3)
+						printf("\nDificuldade inválida. Digite novamente: ");
+				} while (player.nivel < 1 || player.nivel > 3);
+				novoJogo(player, &jogoAtual); // NOVO: passa o ponteiro da struct
 				break;
 			case 'X':
+				if (jogoAtual.emAndamento == 1){
+					printf("\n\nDeseja salvar o jogo atual antes de sair? (S/N)");
+					char SalvarOuNao;
+					scanf(" %c", &SalvarOuNao);
+					switch (SalvarOuNao) {
+						case 'S': 
+						salvarJogo(jogoAtual.Segredo, jogoAtual.player, jogoAtual.nCores, jogoAtual.nTentativas, jogoAtual.tentativaAtual, jogoAtual.jogoSecreto);
+						printf("Jogo atual salvo.\n");
+						break;
+						case 'N': 
+						break;
+					}
+				}
 				printf("Encerrando o jogo...\n");
 				break;
 			case 'R': {
@@ -99,6 +131,19 @@ void Menu () {
 				exibirRanking(ranking, quantidade);
 				break;
 			}
+			case 'S': 
+				if (jogoAtual.emAndamento == 1) {
+					salvarJogo(jogoAtual.Segredo, jogoAtual.player, jogoAtual.nCores, jogoAtual.nTentativas, jogoAtual.tentativaAtual, jogoAtual.jogoSecreto);
+				} else {
+					printf("\nNao ha jogo em andamento para salvar.\n\n");
+				}
+				break;
+			case 'C':  {
+				char dificuldade;
+				int tentativaAtual;
+				carregarJogo(dificuldade, &player, &tentativaAtual, &jogoAtual);
+				break;
+			}
 			default:
 				printf("\n\nDigite uma opcao valida.\n\n");
 				break;
@@ -106,7 +151,7 @@ void Menu () {
 	} while (opcaoInicial != 'X'); // fechar programa caso seja X a opção escolhida
 }
 
-void novoJogo (Jogador player) {
+void novoJogo (Jogador player, JogoAtual *jogoAtual) {
 	// Função para iniciar um novo jogo
 
 	int nCores;
@@ -144,14 +189,15 @@ void novoJogo (Jogador player) {
 		jogoSecreto[i] = malloc(nCores * sizeof(int));
 	}
 
-	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas, player);
+	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas, player, jogoAtual, 0); 
 }
 
-void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador player) { 
+void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTentativas, Jogador player, JogoAtual *jogoAtual, int tentativaInicial) { 
 	
-	int tentativaAtual = 0;
+	int tentativaAtual = tentativaInicial;
 	int Ganhou = 0;
 	int sair = 0;
+	jogoAtual->emAndamento = 0; 
 	printf("Escolha numeros entre 1 e 6. Caso deseje sair, digite 0.\n\n");
 	do { 
 		Ganhou = 0;
@@ -179,8 +225,17 @@ void conferirTentativas (int **jogoSecreto, int *Segredo, int nCores, int nTenta
 		}
 		while (getchar() != '\n');
 		
-		if (sair) 
+		if (sair == 1) {
+			// NOVO: guarda o estado atual do jogo na struct antes de sair, para poder salvar depois
+			jogoAtual->player = player;
+			jogoAtual->nCores = nCores;
+			jogoAtual->nTentativas = nTentativas;
+			jogoAtual->tentativaAtual = tentativaAtual;
+			jogoAtual->Segredo = Segredo;
+			jogoAtual->jogoSecreto = jogoSecreto;
+			jogoAtual->emAndamento = 1;
 			return; // sai da funcao inteira sem chamar a funcao do menu
+		}
 
 		printf("Resultado da tentativa %d: ", tentativaAtual + 1);
 		for (int i=0; i < nCores; i++) {
@@ -293,4 +348,94 @@ void exibirRanking (Ranking ranking[], int quantidade) {
 
 	for (int i=0; i < quantidade; i++) 
 		printf("Ranking: \n\nPosicao %d:\n%sDificuldade %d - %d tentativas \n\n", i+1, ranking[i].nome, ranking[i].nivel, ranking[i].tentativas);
+}
+
+void salvarJogo (int Segredo[], Jogador player, int nCores, int nTentativas, int tentativaAtual, int **jogoSecreto) {
+	printf("Digite o nome do arquivo que deseja salvar seu jogo: ");
+	char nomeJogo[30];
+	scanf(" %s", nomeJogo);
+	FILE *arquivo = fopen (strcat(nomeJogo, ".cor"), "w");
+
+	char dificuldade;
+
+	if (Segredo != 0) {
+		switch (player.nivel) {
+		case 1:
+			dificuldade = 'F';
+			break;
+		case 2:
+			dificuldade = 'M';
+			break;
+		case 3:
+			dificuldade = 'D';
+			break;
+		default: 
+			break;
+	}
+		fprintf(arquivo, "%s\n%c\n",player.nome,dificuldade);
+		for (int i=0; i < nCores; i++) 
+			fprintf(arquivo,"%d ", Segredo[i]);
+		fprintf(arquivo,"\n%d\n", tentativaAtual);
+		if (tentativaAtual > 0 ) {
+			for (int i=0; i < tentativaAtual; i++) {
+				fprintf(arquivo, "\n");
+				for (int j=0; j < nCores; j++)
+					fprintf(arquivo,"%d ", jogoSecreto[i][j]);
+			}
+		}
+	}
+	fclose(arquivo);
+}
+
+void carregarJogo (char dificuldade, Jogador *player, int *tentativaAtual, JogoAtual *jogoAtual) {
+	printf("Digite o nome do jogo que deseja abrir: ");
+	char abrirJogo[30];
+	scanf(" %s", abrirJogo);
+
+
+	FILE *arquivo = fopen(strcat(abrirJogo, ".cor"), "r");
+	if (arquivo == NULL) {
+		printf("Jogo não encontrado!");
+		return;
+	}
+	fscanf(arquivo, " %s", player->nome);
+	fscanf(arquivo, " %c", &dificuldade);
+	int nTentativas, nCores;
+		switch (dificuldade) {
+		case 'F':
+			player->nivel = 1;
+			nCores = 4;
+			nTentativas = 10;
+			break;
+		case 'M':
+			player->nivel = 2;
+			nCores = 5;
+			nTentativas = 12;
+			break;
+		case 'D':
+			player->nivel = 3;
+			nCores = 6;
+			nTentativas = 15;
+			break;
+		default: 
+			break;
+		}
+
+		int *Segredo = malloc (nCores * sizeof(int));
+
+		int **jogoSecreto = malloc (nTentativas * sizeof(int*));
+		for (int i = 0; i < nTentativas; i++) 
+			jogoSecreto[i] = malloc(nCores * sizeof(int));
+		
+	for ( int i=0; i < nCores; i++) 
+		fscanf(arquivo, "%d", &Segredo[i]);
+	fscanf(arquivo,"%d", tentativaAtual);
+	for (int i=0; i < *tentativaAtual; i++) {
+		fscanf(arquivo, "\n");
+		for (int j=0; j < nCores; j++)
+			fscanf(arquivo,"%d ", &jogoSecreto[i][j]);
+	}
+	fclose (arquivo);
+
+	conferirTentativas(jogoSecreto, Segredo, nCores, nTentativas, *player, jogoAtual, *tentativaAtual);
 }
